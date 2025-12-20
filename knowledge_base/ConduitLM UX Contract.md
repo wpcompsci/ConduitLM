@@ -154,7 +154,51 @@ A raw “reader mode dump” is insufficient.
 
 ---
 
-## 7. Feedback and Error Handling
+## 7. Host Access and Permission UX (Binding)
+
+### Purpose
+
+Define the required user experience when ConduitLM lacks permission to access the current page.
+
+### Rules
+
+* ConduitLM MUST NOT attempt silent content extraction on pages without access.
+* If required page access is missing at send time, the user MUST be informed before confirmation.
+* Permission acquisition MUST be user-initiated and explicit.
+
+### Required UX Behavior
+
+When a user initiates a send action and page access is missing:
+
+1. The UI MUST display a blocking state indicating:
+
+   * Content access is required to proceed
+   * The current page domain
+2. The UI MUST offer exactly one of the following actions:
+
+   * “Grant access to this site and continue”
+   * “Cancel send”
+3. If the user grants access:
+
+   * The send flow resumes without restarting the extension UI
+4. If the user declines:
+
+   * The send is aborted with a visible cancellation state
+   * No retry is attempted automatically
+
+### Prohibited Behavior
+
+* Silent failure or fallback
+* Implicit permission escalation
+* Proceeding with incomplete or empty content
+* Hiding permission state from the user
+
+Permission state MUST be resolved before confirmation.
+Confirmation MUST reflect the final resolved state.
+
+---
+
+## 8. Feedback and Error Handling
 
 ConduitLM must provide **explicit, unambiguous feedback**.
 
@@ -174,7 +218,7 @@ Generic errors such as “something went wrong” are unacceptable.
 
 ---
 
-## 8. Speed and Friction Tolerance
+## 9. Speed and Friction Tolerance
 
 ConduitLM prioritizes **reliability over speed**.
 
@@ -194,7 +238,7 @@ One extra confirmation click is preferable to a bad ingestion.
 
 ---
 
-## 9. Explicit Anti-Requirements
+## 10. Explicit Anti-Requirements
 
 ConduitLM must not include:
 
@@ -209,7 +253,7 @@ ConduitLM is a **pipe**, not a workspace.
 
 ---
 
-## 10. Success Criteria
+## 11. Success Criteria
 
 From the user’s perspective, ConduitLM is successful if:
 
@@ -227,7 +271,7 @@ Failure looks like:
 
 ---
 
-## 11. Governing Question
+## 12. Governing Question
 
 Before adding or modifying any feature, the following question must be answered:
 
@@ -237,7 +281,7 @@ If it adds ceremony, it does not belong in ConduitLM.
 
 ---
 
-## 12. Contract Status
+## 13. Contract Status
 
 This UX Contract is binding.
 

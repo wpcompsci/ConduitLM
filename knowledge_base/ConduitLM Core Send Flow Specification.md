@@ -247,3 +247,183 @@ This Core Send Flow Specification is binding.
 All triggers must route into this flow.
 All sources must conform to its extraction contract.
 All ingestion must be performed by the centralized pipeline.
+
+---
+
+Good. We do **not** need a reflow. The documents are structurally sound. What is missing are **binding sections** that close ambiguity loops. You can paste these in cleanly without destabilizing anything.
+
+Below are **exact, drop-in sections**, written to be short, explicit, and agent-proof. I will tell you where each goes.
+
+---
+
+# 1. UX Contract
+
+### Add ONE new subsection
+
+**No reflow required**
+
+### Where to place it
+
+Under the section that defines **user-visible send flow / confirmation behavior**, or immediately before error handling.
+
+---
+
+## Host Access and Permission UX (Binding)
+
+### Purpose
+
+Define the required user experience when ConduitLM lacks permission to access the current page.
+
+### Rules
+
+* ConduitLM MUST NOT attempt silent content extraction on pages without access.
+* If required page access is missing at send time, the user MUST be informed before confirmation.
+* Permission acquisition MUST be user-initiated and explicit.
+
+### Required UX Behavior
+
+When a user initiates a send action and page access is missing:
+
+1. The UI MUST display a blocking state indicating:
+
+   * Content access is required to proceed
+   * The current page domain
+2. The UI MUST offer exactly one of the following actions:
+
+   * “Grant access to this site and continue”
+   * “Cancel send”
+3. If the user grants access:
+
+   * The send flow resumes without restarting the extension UI
+4. If the user declines:
+
+   * The send is aborted with a visible cancellation state
+   * No retry is attempted automatically
+
+### Prohibited Behavior
+
+* Silent failure or fallback
+* Implicit permission escalation
+* Proceeding with incomplete or empty content
+* Hiding permission state from the user
+
+Permission state MUST be resolved before confirmation.
+Confirmation MUST reflect the final resolved state.
+
+---
+
+# 2. Core Send Flow Specification
+
+### Add TWO subsections
+
+**No reflow required**
+
+---
+
+## Lifecycle Resilience and Message Safety (Binding)
+
+### Purpose
+
+Ensure the Core Send Flow remains reliable under Firefox MV3 lifecycle constraints.
+
+### Rules
+
+* No step in the Core Send Flow may assume persistent background state.
+* Each send attempt MUST be treated as an isolated transaction.
+* All send attempts MUST be uniquely identifiable.
+
+### Required Behavior
+
+* Every send request MUST include a `requestId`.
+* Message handlers MUST:
+
+  * return exactly one response
+  * handle background suspension safely
+* Any step awaiting a response MUST implement:
+
+  * a bounded timeout
+  * a user-visible failure state on timeout
+* Retries MUST be safe and idempotent.
+
+### Prohibited Behavior
+
+* Long-lived background state assumptions
+* Unbounded waits for responses
+* Silent hangs or unresolved promises
+* Reliance on in-memory state for correctness
+
+If lifecycle interruption occurs, the flow MUST fail explicitly and inform the user.
+
+---
+
+## v1 Content Extraction Heuristic (Binding)
+
+### Purpose
+
+Define a minimal, shippable extraction strategy for version one.
+
+### Rules
+
+* Selection content ALWAYS takes precedence if present.
+* Extraction MUST favor correctness and predictability over completeness.
+
+### Required v1 Heuristic
+
+When no user selection exists:
+
+1. **Title**
+
+   * Use `document.title`
+2. **URL**
+
+   * Prefer canonical URL if present
+   * Else use `location.href`
+3. **Main Content**
+   Apply the first valid match:
+
+   1. `<article>` element with non-trivial text
+   2. `<main>` element with non-trivial text
+   3. Largest text container among common candidates (`article`, `main`, `section`, `div`) by text length
+4. **Cleanup**
+
+   * Strip obvious navigation, footer, and sidebar content
+   * Avoid aggressive readability transformations
+
+### Prohibited Behavior
+
+* Full readability pipelines in v1
+* Cross-site heuristics
+* Source-specific assumptions
+* Boilerplate-dominated output
+
+Extraction MUST return non-empty content or fail explicitly.
+
+---
+
+# 3. Architecture Rules and Modularity Charter
+
+### Add ONE short section
+
+**No reflow required**
+
+---
+
+## Document Precedence and Conflict Resolution (Binding)
+
+### Authority Order
+
+In the event of ambiguity or conflict, documents MUST be applied in this order:
+
+1. ConduitLM Architecture Rules and Modularity Charter
+2. ConduitLM UX Contract
+3. ConduitLM Core Send Flow Specification
+4. ConduitLM Firefox MV3 Canonical Architecture and Enforcement Rules
+5. Firefox MV3 reference documents (supporting, non-authoritative)
+
+### Conflict Rule
+
+* If a conflict is detected between documents, implementation MUST halt.
+* The conflict MUST be reported and resolved through document revision before proceeding.
+* No implementation may resolve conflicts by assumption or reinterpretation.
+
+Silence is not permission.
