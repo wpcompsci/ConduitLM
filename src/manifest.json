@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "ConduitLM",
+  "version": "1.0.0",
+  "description": "Firefox MV3 Adapter for NotebookLM Ingestion",
+  "permissions": [
+    "storage",
+    "tabs",
+    "activeTab",
+    "scripting"
+  ],
+  "optional_host_permissions": [
+    "https://notebooklm.google.com/*"
+  ],
+  "background": {
+    "scripts": [
+      "integrations/notebooklm/rpc.js",
+      "integrations/notebooklm/tokens.js",
+      "integrations/notebooklm/parse.js",
+      "integrations/notebooklm/client.js",
+      "ingestion/pipeline.js",
+      "background/main.js"
+    ]
+  },
+  "action": {
+    "default_popup": "ui/popup/popup.html",
+    "default_title": "ConduitLM"
+  }
+}
