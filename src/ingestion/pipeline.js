@@ -1,5 +1,5 @@
 // Ingestion Pipeline
-(function (global) {
+(function (scope) {
 
     // Helper to extract selection from active tab
     async function getSelectionFromActiveTab() {
@@ -22,9 +22,7 @@
                 }
             });
 
-            // MV3 executeScript returns array of results
             if (!results || results.length === 0) {
-                // Could be injection failed silently or frame issue
                 throw new Error("Injection returned no results");
             }
 
@@ -44,19 +42,16 @@
         }
     }
 
-    global.Pipeline = {
+    scope.Pipeline = {
         handleListNotebooks: async function () {
             try {
-                return await global.NLM_Client.listNotebooks();
+                return await scope.NLM_Client.listNotebooks();
             } catch (e) {
-                // Return structured error
                 throw e.code ? e : { code: "notebook_list", message: e.message || "Failed to list notebooks" };
             }
         },
 
         handleIngest: async function (destination) {
-            // destination: { type: 'select', id: '...' } OR { type: 'create', title: '...' }
-
             // 1. Capture Selection
             const selectionData = await getSelectionFromActiveTab();
             if (!selectionData.content || selectionData.content.trim().length === 0) {
@@ -69,7 +64,7 @@
 
             if (destination.type === 'create') {
                 try {
-                    const created = await global.NLM_Client.createNotebook(destination.title);
+                    const created = await scope.NLM_Client.createNotebook(destination.title);
                     notebookId = created.id;
                     notebookTitle = created.title;
                 } catch (e) {
@@ -79,7 +74,7 @@
 
             // 3. Add Source
             try {
-                await global.NLM_Client.addTextSource(notebookId, selectionData.title, selectionData.content);
+                await scope.NLM_Client.addTextSource(notebookId, selectionData.title, selectionData.content);
                 return {
                     status: "ingested",
                     notebookId: notebookId,
@@ -91,4 +86,4 @@
             }
         }
     };
-})(typeof window !== 'undefined' ? window : this);
+})(globalThis);

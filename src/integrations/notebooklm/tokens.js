@@ -1,5 +1,5 @@
 // NotebookLM Token Discovery
-(function (global) {
+(function (scope) {
     const TOKENS = {
         AT: null,
         BL: null
@@ -17,20 +17,13 @@
         return match ? match[1] : null;
     }
 
-    global.NLM_Tokens = {
+    scope.NLM_Tokens = {
         /**
          * Fetches homepage and extracts tokens.
          * Throws 'auth' error if failing.
          */
         fetchTokens: async function () {
             try {
-                // If we have them in memory, reusing might be ok for a session, 
-                // but for correctness/robustness (volatility), re-fetching or 
-                // verifying logic is better. Minding the "Don't store in memory 
-                // for correctness" hint in prompt, strictly fetching fresh might be better. 
-                // But batchexecute usually allows tokens to live for a session.
-                // We will fetch fresh to be safe given the prompt requirements.
-
                 const response = await fetch("https://notebooklm.google.com/", {
                     method: "GET",
                     headers: { "Cache-Control": "no-cache" }
@@ -63,4 +56,4 @@
             }
         }
     };
-})(typeof window !== 'undefined' ? window : this);
+})(globalThis);

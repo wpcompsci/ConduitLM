@@ -1,10 +1,11 @@
 // NotebookLM Client
-(function (global) {
+(function (scope) {
 
     const HOST_ORIGIN = "https://notebooklm.google.com";
     const ENDPOINT = `${HOST_ORIGIN}/_/LabsTailwindUi/data/batchexecute`;
 
     async function checkPermission() {
+        // Safe check using browser namespace (always available in MV3 background)
         const has = await browser.permissions.contains({
             origins: ["https://notebooklm.google.com/*"]
         });
@@ -19,7 +20,6 @@
         const reqId = Math.floor(Math.random() * 100000);
 
         // Construct freq
-        // Format: [[[RPC_ID, JSON_PAYLOAD, null, "generic"]]]
         const freq = JSON.stringify([
             [[rpcId, JSON.stringify(payloadInner), null, "generic"]]
         ]);
@@ -50,44 +50,40 @@
         return await response.text();
     }
 
-    global.NLM_Client = {
+    scope.NLM_Client = {
         listNotebooks: async function () {
-            const tokens = await global.NLM_Tokens.fetchTokens();
-            // Payload: [null, 1, null, [2]] from prompt
+            const tokens = await scope.NLM_Tokens.fetchTokens();
             const payload = [null, 1, null, [2]];
 
-            const raw = await executeRequest(global.NLM_RPC.LIST_NOTEBOOKS, payload, tokens);
-            return global.NLM_Parse.parseListNotebooks(raw);
+            const raw = await executeRequest(scope.NLM_RPC.LIST_NOTEBOOKS, payload, tokens);
+            return scope.NLM_Parse.parseListNotebooks(raw);
         },
 
         createNotebook: async function (title) {
-            const tokens = await global.NLM_Tokens.fetchTokens();
-            // Payload: [title]
+            const tokens = await scope.NLM_Tokens.fetchTokens();
             const payload = [title];
 
-            const raw = await executeRequest(global.NLM_RPC.CREATE_NOTEBOOK, payload, tokens);
-            return global.NLM_Parse.parseCreateNotebook(raw);
+            const raw = await executeRequest(scope.NLM_RPC.CREATE_NOTEBOOK, payload, tokens);
+            return scope.NLM_Parse.parseCreateNotebook(raw);
         },
 
         addTextSource: async function (notebookId, title, content) {
-            const tokens = await global.NLM_Tokens.fetchTokens();
+            const tokens = await scope.NLM_Tokens.fetchTokens();
 
-            // textSource structure from prompt
             const textSource = [
                 null,
                 [title, content],
                 null, 2, null, null, null, null, null, null, 1
             ];
 
-            // payload = [[textSource], notebookId, [2]]
             const payload = [
                 [textSource],
                 notebookId,
                 [2]
             ];
 
-            const raw = await executeRequest(global.NLM_RPC.ADD_SOURCE, payload, tokens);
-            return global.NLM_Parse.parseAddSource(raw);
+            const raw = await executeRequest(scope.NLM_RPC.ADD_SOURCE, payload, tokens);
+            return scope.NLM_Parse.parseAddSource(raw);
         }
     };
-})(typeof window !== 'undefined' ? window : this);
+})(globalThis);

@@ -21,20 +21,15 @@ browser.runtime.onMessage.addListener((message, sender) => {
     };
 
     if (message.type === "NLM_LIST_NOTEBOOKS") {
-        return respond(global.Pipeline.handleListNotebooks());
+        // Use globalThis to access globally registered Pipeline
+        return respond(globalThis.Pipeline.handleListNotebooks());
     }
 
     if (message.type === "SEND_SELECTION_TO_NLM") {
-        // message.destination: { type: 'select'|'create', id?, title? }
-        return respond(global.Pipeline.handleIngest(message.destination));
+        return respond(globalThis.Pipeline.handleIngest(message.destination));
     }
 
-    // Explicitly return false/undefined for unknown messages to ignore them
-    // But protocol says "one response per message"... if it's OUR message.
-    // We should differentiate namespace or just ignore unknown.
-    // If we return a Promise, browser waits. If we return undefined, it closes.
-    // For unknown types, we return undefined (synchronously).
+    // Explicitly return false/undefined for unknown messages
 });
 
-// State restoration or other sync logic can go here if needed.
 console.log("ConduitLM Background Initialized");
