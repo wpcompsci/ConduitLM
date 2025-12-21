@@ -14,11 +14,6 @@
   ],
   "background": {
     "scripts": [
-      "integrations/notebooklm/rpc.js",
-      "integrations/notebooklm/tokens.js",
-      "integrations/notebooklm/parse.js",
-      "integrations/notebooklm/client.js",
-      "ingestion/pipeline.js",
       "background/main.js"
     ]
   },

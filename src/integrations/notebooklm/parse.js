@@ -1,19 +1,18 @@
-```javascript
 // NotebookLM Response Parsing
 (function (scope) {
 
     function safeJSONParse(text) {
         if (!text) throw { code: "parse", message: "Empty response body" };
         const clean = text.replace(/^\)]}'\s*/, "");
-        
+
         // Batchexecute often includes length prefixes or multiple chunks.
         // We look for the first line that parses into a standard envelope Array.
         const lines = clean.split('\n');
-        
+
         for (const line of lines) {
             const trimmed = line.trim();
             if (!trimmed) continue;
-            
+
             try {
                 const parsed = JSON.parse(trimmed);
                 if (Array.isArray(parsed)) {
@@ -24,7 +23,7 @@
                 // or continue if it's valid JSON but not an array (like a length prefix)
             }
         }
-        
+
         throw { code: "parse", message: "No valid JSON array found in response" };
     }
 
