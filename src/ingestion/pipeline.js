@@ -84,6 +84,42 @@
             } catch (e) {
                 throw e.code ? e : { code: "source_ingest", message: e.message || "Failed to add text source" };
             }
+        },
+
+        handleSaveConversation: async function (data) {
+            const { conversation, source, notebookId } = data; // notebookId can be optional
+
+            // Let's create a new notebook with the title 'source' (e.g. "[ChatGPT] New chat")
+            try {
+                // If it's a doc import
+                const isGDocImport = conversation.length === 1 && conversation[0].role === 'document';
+
+                // Use formatters
+                let content = "";
+                if (isGDocImport) {
+                    throw { code: "not_implemented", message: "GDoc import not fully implemented in pipeline yet." };
+                } else {
+                    // scope.sourceFormatters must be loaded
+                    if (!scope.sourceFormatters) throw { code: "dependency", message: "Source formatters not loaded" };
+                    content = scope.sourceFormatters.md(source, conversation);
+                }
+
+                // Create Notebook
+                const notebook = await scope.NLM_Client.createNotebook(source);
+
+                // Add Source
+                await scope.NLM_Client.addTextSource(notebook.id, source, content);
+
+                return {
+                    status: "saved_conversation",
+                    notebookId: notebook.id,
+                    notebookTitle: notebook.title,
+                    sourceTitle: source
+                };
+            } catch (e) {
+                console.error("Pipeline Save Error:", e);
+                throw e.code ? e : { code: "save_conversation", message: e.message || "Failed to save conversation" };
+            }
         }
     };
 })(globalThis);

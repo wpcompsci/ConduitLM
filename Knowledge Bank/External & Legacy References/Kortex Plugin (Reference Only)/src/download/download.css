@@ -1,0 +1,188 @@
+/* src/download/download.css */
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: #f7f7f7;
+}
+
+.container {
+    width: 380px;
+    padding: 20px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    height: 550px; /* Fixed height for the popup window */
+}
+
+.header {
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #ccc;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.header h2 {
+    margin: 0;
+    color: #47d967;
+    font-size: 20px;
+}
+
+#search-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 14px;
+    border: 1.5px solid #e3e8ee;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    font-size: 15px;
+    background: #fff;
+    transition: border 0.18s;
+    flex-shrink: 0;
+}
+
+#search-input:focus {
+    outline: none;
+    border: 1.5px solid #1a73e8;
+}
+
+#controls-container {
+    margin-bottom: 10px;
+    flex-shrink: 0;
+}
+
+.select-all-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #555;
+}
+
+#select-all-container input {
+    width: 16px;
+    height: 16px;
+}
+
+#notebook-items-container {
+    flex-grow: 1; /* This makes the list take up available space */
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-right: 4px;
+    border: 1.5px solid #e3e8ee;
+    border-radius: 8px;
+    padding: 8px;
+    background-color: #fff;
+}
+
+.notebook-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    background-color: #f9f9f9;
+    font-size: 15px;
+    color: #333;
+    font-weight: 500;
+    transition: background-color 0.2s ease;
+    flex-shrink: 0;
+}
+
+.notebook-item:hover {
+    background-color: #e3eafc;
+}
+
+.notebook-item input[type="checkbox"] {
+    margin-right: 12px;
+    width: 18px;
+    height: 18px;
+}
+
+.disabled {
+    text-align: center;
+    padding: 20px;
+    color: #5f6368;
+    font-weight: 500;
+}
+
+#download-button-container {
+    margin-top: 15px;
+    flex-shrink: 0;
+}
+
+@keyframes shimmer {
+    100% { transform: translateX(100%); }
+}
+
+.btn-primary {
+    position: relative;
+    overflow: hidden;
+    background-image: linear-gradient(45deg, #60a470, #47d967);
+    color: #ffffff;
+    border: none;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 15px;
+    transition: filter 0.2s ease, opacity 0.2s ease;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.btn-primary:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.btn-primary::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    transform: translateX(-100%);
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    animation: shimmer 2.5s infinite;
+}
+
+.btn-primary:hover:not(:disabled) {
+    filter: brightness(1.1);
+}
+
+.btn-primary span:first-child {
+    margin-right: 12px;
+    font-size: 1.2em;
+}
+
+#format-options-container {
+    padding: 10px 8px;
+    margin-bottom: 10px;
+    border: 1.5px solid #e3e8ee;
+    border-radius: 8px;
+    background-color: #fff;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+#format-options-container label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+#format-options-container input[type="radio"] {
+    width: 16px;
+    height: 16px;
+}

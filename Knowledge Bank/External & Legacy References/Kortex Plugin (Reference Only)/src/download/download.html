@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Kortex Source Exporter</title>
+    <link rel="stylesheet" href="download.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2 id="popup-title">Select Sources</h2>
+        </div>
+        
+        <input type="text" id="search-input" placeholder="Filter sources...">
+        
+        <div id="controls-container">
+             <div class="select-all-container">
+                <input type="checkbox" id="select-all-checkbox" checked>
+                <label for="select-all-checkbox">Select All</label>
+            </div>
+        </div>
+        <div id="format-options-container">
+            <label><input type="radio" name="format" value="md" checked> Markdown (.md)</label>
+            <label><input type="radio" name="format" value="txt"> Plain Text (.txt)</label>
+            <!-- <label><input type="radio" name="format" value="pdf"> PDF (.pdf)</label>  -->
+        </div>
+        
+        <div id="notebook-items-container">
+            <div id="loading-state" class="disabled">Loading sources...</div>
+        </div>
+        
+        <div id="download-button-container">
+             <button id="download-btn" class="btn-primary">
+                <span>⬇️</span>
+                <span>Download Selected</span>
+            </button>
+        </div>
+    </div>
+    <script src="download.js"></script>
+</body>
+</html>

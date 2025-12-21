@@ -29,6 +29,10 @@ browser.runtime.onMessage.addListener((message, sender) => {
         return respond(globalThis.Pipeline.handleIngest(message.destination));
     }
 
+    if (message.type === "SAVE_CONVERSATION") {
+        return respond(globalThis.Pipeline.handleSaveConversation(message.data));
+    }
+
     // Default handler for unknown messages to prevent hanging
     return Promise.resolve({
         ok: false,

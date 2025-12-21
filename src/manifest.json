@@ -7,16 +7,44 @@
     "storage",
     "tabs",
     "activeTab",
-    "scripting"
+    "scripting",
+    "downloads",
+    "cookies",
+    "contextMenus"
   ],
-  "optional_host_permissions": [
-    "https://notebooklm.google.com/*"
+  "host_permissions": [
+    "*://notebooklm.google.com/*",
+    "*://chatgpt.com/*",
+    "*://gemini.google.com/*",
+    "*://docs.google.com/*"
   ],
   "background": {
     "scripts": [
-      "background/main.js"
+      "lib/jszip.min.js",
+      "lib/jspdf.umd.min.js",
+      "utils/formatters.js",
+      "utils/pdf-generator.js",
+      "integrations/notebooklm/rpc.js",
+      "integrations/notebooklm/tokens.js",
+      "integrations/notebooklm/parse.js",
+      "integrations/notebooklm/client.js",
+      "ingestion/pipeline.js",
+      "background/router.js"
     ]
   },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://chatgpt.com/*",
+        "*://gemini.google.com/*",
+        "*://docs.google.com/*"
+      ],
+      "js": [
+        "ingestion/content_scraper.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
   "action": {
     "default_popup": "ui/popup/popup.html",
     "default_title": "ConduitLM"
