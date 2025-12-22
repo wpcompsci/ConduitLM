@@ -4,6 +4,8 @@
 
 // Expects globalThis.Pipeline to be available
 
+console.log('[ConduitLM] router loaded', Date.now());
+
 browser.runtime.onMessage.addListener((message, _sender) => {
   // Envelope: { ok, data, error }
   const respond = (resultPromise) => {
@@ -26,12 +28,26 @@ browser.runtime.onMessage.addListener((message, _sender) => {
     return respond(globalThis.Pipeline.handleListNotebooks());
   }
 
+  if (message.type === 'NLM_SEND') {
+    return respond(globalThis.Pipeline.handleSend(message.payload));
+  }
+
   if (message.type === 'SEND_SELECTION_TO_NLM') {
-    return respond(globalThis.Pipeline.handleIngest(message.destination));
+    return respond(
+      globalThis.Pipeline.handleSend({
+        intent: 'selection',
+        destination: message.destination,
+      })
+    );
   }
 
   if (message.type === 'SAVE_CONVERSATION') {
-    return respond(globalThis.Pipeline.handleSaveConversation(message.data));
+    return respond(
+      globalThis.Pipeline.handleSend({
+        intent: 'chat',
+        destination: message.destination || { type: 'create', title: message.data.source },
+      })
+    );
   }
 
   // Default handler for unknown messages to prevent hanging

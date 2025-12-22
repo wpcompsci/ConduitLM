@@ -29,8 +29,26 @@
   },
   "background": {
     "scripts": [
-      "background/main.js"
-    ],
-    "type": "module"
+      "lib/jszip.min.js",
+      "lib/jspdf.umd.min.js",
+      "utils/formatters.js",
+      "utils/pdf-generator.js",
+      "shared/errors.js",
+      "shared/normalize.js",
+      "sources/registry.js",
+      "sources/chatgpt.js",
+      "sources/gemini.js",
+      "sources/gdocs.js",
+      "sources/web.js",
+      "integrations/notebooklm/rpc.js",
+      "integrations/notebooklm/tokens.js",
+      "integrations/notebooklm/batchexecute.js",
+      "integrations/notebooklm/parse.js",
+      "integrations/notebooklm/client.js",
+      "ingestion/jobs.js",
+      "ingestion/extractor.js",
+      "ingestion/pipeline.js",
+      "background/router.js"
+    ]
   }
 }

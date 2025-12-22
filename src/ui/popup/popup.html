@@ -19,6 +19,17 @@
       <!-- Main Form -->
       <div id="form-view" class="view hidden">
         <div class="field-group">
+          <label for="intent-select">Content</label>
+          <select id="intent-select">
+            <option value="auto" selected>Auto-detect (recommended)</option>
+            <option value="selection">Selected text</option>
+            <option value="page">Full web page</option>
+            <option value="chat">ChatGPT or Gemini conversation</option>
+            <option value="gdoc">Google Doc</option>
+          </select>
+        </div>
+
+        <div class="field-group">
           <label for="notebook-select">Destination</label>
           <select id="notebook-select">
             <option value="" disabled selected>Loading notebooks...</option>
@@ -40,6 +51,10 @@
         <div id="status-icon"></div>
         <div id="status-message"></div>
         <div id="status-detail"></div>
+        <details id="status-detail-box" class="hidden">
+          <summary>Details</summary>
+          <pre id="status-detail-text"></pre>
+        </details>
         <button id="btn-reset" class="secondary hidden">Back</button>
       </div>
     </div>

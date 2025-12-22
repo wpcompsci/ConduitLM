@@ -11,11 +11,14 @@ const elements = {
   btnEnable: document.getElementById('btn-enable-access'),
   btnSend: document.getElementById('btn-confirm-send'),
   btnReset: document.getElementById('btn-reset'),
+  intentSelect: document.getElementById('intent-select'),
   notebookSelect: document.getElementById('notebook-select'),
   createContainer: document.getElementById('create-container'),
   newTitleInput: document.getElementById('new-notebook-title'),
   statusMessage: document.getElementById('status-message'),
   statusDetail: document.getElementById('status-detail'),
+  statusDetailBox: document.getElementById('status-detail-box'),
+  statusDetailText: document.getElementById('status-detail-text'),
   statusIcon: document.getElementById('status-icon'),
 };
 
@@ -56,6 +59,15 @@ async function requestPermission() {
 async function loadNotebooks() {
   setLoading(true);
   try {
+    const hasPermission = await browser.permissions.contains({
+      origins: [HOST_ORIGIN],
+    });
+    if (!hasPermission) {
+      showView('gate');
+      setLoading(false);
+      return;
+    }
+
     const response = await browser.runtime.sendMessage({ type: 'NLM_LIST_NOTEBOOKS' });
     if (!response.ok) throw response.error;
 
@@ -84,6 +96,7 @@ function populateDropdown(notebooks) {
     const opt = document.createElement('option');
     opt.value = nb.id;
     opt.text = nb.title;
+    opt.dataset.title = nb.title;
     select.appendChild(opt);
   });
 
@@ -109,20 +122,34 @@ async function handleSend() {
   const val = elements.notebookSelect.value;
   const isCreate = val === '__create__';
   const newTitle = elements.newTitleInput.value.trim();
+  const intent = elements.intentSelect.value || 'auto';
 
   if (isCreate && !newTitle) {
     showError('notebook_create', 'Please enter a name for the new notebook');
     return;
   }
 
-  const destination = isCreate ? { type: 'create', title: newTitle } : { type: 'select', id: val };
+  let destination = null;
+  if (isCreate) {
+    destination = { type: 'create', title: newTitle };
+  } else {
+    const selectedOption = elements.notebookSelect.selectedOptions[0];
+    destination = {
+      type: 'select',
+      id: val,
+      title: selectedOption ? selectedOption.dataset.title : '',
+    };
+  }
 
-  showStatus('Sending...', 'Ingesting selection...');
+  showStatus('Sending...', 'Ingesting content...');
 
   try {
     const response = await browser.runtime.sendMessage({
-      type: 'SEND_SELECTION_TO_NLM',
-      destination: destination,
+      type: 'NLM_SEND',
+      payload: {
+        intent: intent,
+        destination: destination,
+      },
     });
 
     if (!response.ok) throw response.error;
@@ -134,16 +161,9 @@ async function handleSend() {
 }
 
 function handleError(err) {
-  // Canonical error mapping
-  const code = err.code || 'unknown';
-  const msg = err.message || 'An unknown error occurred';
-
-  let userMsg = msg;
-  if (code === 'auth') userMsg = 'Please sign in to NotebookLM in another tab.';
-  if (code === 'permission') userMsg = 'Permission check failed. Please grant access.';
-  if (code === 'selection_empty') userMsg = 'Text selection is empty.';
-
-  showError(code, userMsg, err.detail);
+  const code = err && err.code ? err.code : 'unknown';
+  const msg = err && err.message ? err.message : 'An unknown error occurred';
+  showError(code, msg, err && err.detail);
 }
 
 function showView(viewName) {
@@ -168,6 +188,7 @@ function showStatus(title, detail) {
   elements.statusMessage.textContent = title;
   elements.statusDetail.textContent = detail || '';
   elements.statusMessage.className = '';
+  elements.statusDetailBox.classList.add('hidden');
   elements.btnReset.classList.add('hidden');
 }
 
@@ -175,17 +196,54 @@ function showSuccess(data) {
   showView('status');
   elements.statusMessage.textContent = 'Saved to NotebookLM';
   elements.statusMessage.className = 'success';
-  elements.statusDetail.textContent = `Ingested into "${data.notebookTitle}"`;
+  const sourceType = formatSourceType(data.sourceType);
+  elements.statusDetail.textContent = `Sent ${sourceType} to "${data.notebookTitle}"`;
+  elements.statusDetailBox.classList.add('hidden');
   elements.btnReset.classList.remove('hidden');
   // Clear form
   elements.newTitleInput.value = '';
+}
+
+function formatSourceType(sourceType) {
+  if (!sourceType) return 'content';
+  const value = String(sourceType).toLowerCase();
+  if (value === 'gdoc') return 'Google Doc';
+  if (value === 'selection') return 'selected text';
+  if (value === 'web') return 'web page';
+  if (value.includes('chatgpt')) return 'ChatGPT conversation';
+  if (value.includes('gemini')) return 'Gemini conversation';
+  return value;
+}
+
+function formatDetail(detail) {
+  if (!detail) return '';
+  if (typeof detail === 'string') return detail;
+  try {
+    return JSON.stringify(detail, null, 2);
+  } catch (e) {
+    return String(detail);
+  }
+}
+
+function truncateDetail(detailText, maxLen) {
+  if (!detailText) return '';
+  if (detailText.length <= maxLen) return detailText;
+  return detailText.slice(0, maxLen) + '...';
 }
 
 function showError(code, msg, detail) {
   showView('status');
   elements.statusMessage.textContent = 'Connection Failed';
   elements.statusMessage.className = 'error';
-  elements.statusDetail.textContent = `[${code}] ${msg} ${detail ? '(' + detail + ')' : ''}`;
+  elements.statusDetail.textContent = `[${code}] ${msg}`;
+  const detailText = truncateDetail(formatDetail(detail), 1200);
+  if (detailText) {
+    elements.statusDetailBox.classList.remove('hidden');
+    elements.statusDetailText.textContent = detailText;
+  } else {
+    elements.statusDetailBox.classList.add('hidden');
+    elements.statusDetailText.textContent = '';
+  }
   elements.btnReset.classList.remove('hidden');
 }
 

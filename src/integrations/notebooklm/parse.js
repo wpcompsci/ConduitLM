@@ -1,12 +1,20 @@
 // NotebookLM Response Parsing
 (function (scope) {
-  function safeJSONParse(text) {
-    if (!text) throw { code: 'parse', message: 'Empty response body' };
-    const clean = text.replace(/^\)]}'\s*/, '');
+  const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-    // Batchexecute often includes length prefixes or multiple chunks.
-    // We look for the first line that parses into a standard envelope Array.
+  function isUuid(value) {
+    return typeof value === 'string' && UUID_REGEX.test(value);
+  }
+
+  function normalizeResponseText(text) {
+    if (!text) throw { code: 'parse', message: 'Empty response body' };
+    return text.replace(/^\)]}'\s*/, '');
+  }
+
+  function parseEnvelopeItems(responseText) {
+    const clean = normalizeResponseText(responseText);
     const lines = clean.split('\n');
+    const items = [];
 
     for (const line of lines) {
       const trimmed = line.trim();
@@ -15,146 +23,150 @@
       try {
         const parsed = JSON.parse(trimmed);
         if (Array.isArray(parsed)) {
-          return parsed;
+          items.push(...parsed);
         }
       } catch (e) {
-        // Ignore lines that aren't valid JSON (like partials)
-        // or continue if it's valid JSON but not an array (like a length prefix)
+        // Skip non-JSON lines (length prefixes, partials).
       }
     }
 
-    throw { code: 'parse', message: 'No valid JSON array found in response' };
+    if (items.length === 0) {
+      throw { code: 'parse', message: 'No batchexecute envelopes found' };
+    }
+
+    return items;
+  }
+
+  function extractPayloads(items) {
+    const payloads = [];
+    for (const item of items) {
+      if (!Array.isArray(item)) continue;
+
+      const rpcId = typeof item[1] === 'string' ? item[1] : null;
+      const payloadStr = typeof item[2] === 'string' ? item[2] : null;
+
+      if (!payloadStr) continue;
+
+      try {
+        const payload = JSON.parse(payloadStr);
+        payloads.push({ rpcId, payload, raw: payloadStr });
+      } catch (e) {
+        // Ignore payloads that do not parse.
+      }
+    }
+
+    return payloads;
+  }
+
+  function extractNotebookList(payload) {
+    if (!Array.isArray(payload)) return null;
+    const notebookList = payload[0];
+    if (!Array.isArray(notebookList)) return null;
+
+    const notebooks = notebookList
+      .filter((entry) => Array.isArray(entry) && isUuid(entry[2]) && typeof entry[0] === 'string')
+      .filter((entry) => !(entry[5] && entry[5][0] === 3))
+      .map((entry) => ({
+        id: entry[2],
+        title: entry[0].trim() || 'Untitled Notebook',
+        emoji: entry[3] || null,
+      }));
+
+    return notebooks.length > 0 ? notebooks : null;
+  }
+
+  function extractFirstUuid(text) {
+    const match = text.match(UUID_REGEX);
+    return match ? match[0] : null;
+  }
+
+  function detectErrorPayload(payload) {
+    if (!Array.isArray(payload)) return null;
+    if (payload.length === 0) return null;
+
+    if (typeof payload[0] === 'string' && (payload[0] === 'er' || payload[0] === 'e')) {
+      return payload;
+    }
+    if (Array.isArray(payload[0])) {
+      const node = payload[0];
+      if (typeof node[0] === 'string' && (node[0] === 'er' || node[0] === 'e')) {
+        return node;
+      }
+    }
+    return null;
+  }
+
+  function summarizePayloads(payloads) {
+    return payloads.map((payload) => ({
+      rpcId: payload.rpcId,
+      payloadType: Array.isArray(payload.payload) ? 'array' : typeof payload.payload,
+    }));
   }
 
   scope.NLM_Parse = {
-    /**
-     * Parses and validates Batchexecute response.
-     * Expects envelope -> payload -> data.
-     */
-    parseListNotebooks: function (responseText) {
-      const json = safeJSONParse(responseText);
+    parseListNotebooks: function (responseText, context) {
+      const items = parseEnvelopeItems(responseText);
+      const payloads = extractPayloads(items);
 
-      // Envelope check
-      // [ ["wXbhsf", "<payload>", null, ... ] ... ]
-      if (!Array.isArray(json)) throw { code: 'parse', message: 'Root not array' };
-
-      // Find the list RPC response
-      const responseItem = json.find(
-        (item) => Array.isArray(item) && item[0] === scope.NLM_RPC.LIST_NOTEBOOKS
-      );
-
-      if (!responseItem) {
-        throw { code: 'parse', message: 'List RPC ID not found in response' };
+      let notebooks = null;
+      const direct = payloads.find((p) => p.rpcId === scope.NLM_RPC.LIST_NOTEBOOKS);
+      if (direct) {
+        notebooks = extractNotebookList(direct.payload);
       }
 
-      // Kortex uses index 2 for the payload string. We should check 1 and 2.
-      const payloadStr = responseItem[1] || responseItem[2];
-      if (!payloadStr) {
-        throw { code: 'parse', message: 'List RPC payload missing (checked idx 1 & 2)' };
-      }
-
-      try {
-        const data = JSON.parse(payloadStr);
-
-        // Kortex: const map = JSON.parse(JSON.parse(dataLine)[0][2]);
-        // Our data is that inner parse.
-        // Kortex says: parsedData[0] is the list.
-
-        // Let's inspect the data structure based on Kortex:
-        // data is [ [notebooks...], ... ] ?
-        // Kortex: const notebookList = parsedData[0];
-
-        if (!Array.isArray(data)) throw new Error('Data payload not array');
-
-        // Assuming data[0] is the list based on Kortex (my previous code used data[1])
-        // Let's try to match Kortex logic: parsedData[0]
-        const notebooksArray = data[0];
-
-        if (!Array.isArray(notebooksArray)) {
-          // Fallback/Safety: try data[1] if data[0] isn't it?
-          // But Kortex is explicit about parsedData[0].
-          return [];
+      if (!notebooks) {
+        for (const candidate of payloads) {
+          const list = extractNotebookList(candidate.payload);
+          if (list) {
+            notebooks = list;
+            break;
+          }
         }
-
-        // Map safely using Kortex indices
-        // id: notebook[2]
-        // name: notebook[0]
-        return notebooksArray
-          .map((nb) => {
-            if (!Array.isArray(nb)) return null;
-            return {
-              id: nb[2], // Kortex ID index
-              title: nb[0] || 'Untitled Notebook', // Kortex Name index
-            };
-          })
-          .filter((nb) => nb && nb.id); // Filter items with valid IDs
-      } catch (e) {
-        throw { code: 'parse', message: 'List payload parsing failed', detail: e.message };
       }
+
+      if (!notebooks) {
+        throw {
+          code: 'parse',
+          message: 'Notebook list not found in response',
+          detail: {
+            tabUrl: context && context.tabUrl ? context.tabUrl : 'unknown',
+            envelopeCount: items.length,
+            payloadCount: payloads.length,
+            payloadSummary: summarizePayloads(payloads),
+            responsePreview: responseText.slice(0, 400),
+          },
+        };
+      }
+
+      return notebooks;
     },
 
     parseCreateNotebook: function (responseText, title) {
-      const json = safeJSONParse(responseText);
-      const responseItem = json.find(
-        (item) => Array.isArray(item) && item[0] === scope.NLM_RPC.CREATE_NOTEBOOK
-      );
-
-      if (!responseItem) throw { code: 'parse', message: 'Create RPC ID not found' };
-
-      const payloadStr = responseItem[1] || responseItem[2];
-      if (!payloadStr) throw { code: 'parse', message: 'Create RPC payload missing' };
-
-      try {
-        const data = JSON.parse(payloadStr);
-        // Kortex regexes the whole response, implying the structure might be complex.
-        // Assuming standard Batchexecute return:
-        // data usually contains the object created.
-        // Let's guess the ID is at a similar index or try to find a UUID-like string if direct mapping fails?
-        // But generally data[1] or data[0] probably holds the notebook details.
-
-        // Let's assume data[0] like listNotebooks?
-        // Or scan for ID.
-        // For now, let's keep it simple: strict check, if fail, we might need regex fallback.
-
-        // My previous code: nb = data[1]. id = nb[0]
-        // If standard holds: nb might be at data[0]?
-        // Let's try to look for the ID in the array recursively or just grab the first string that looks like an ID?
-
-        // Safest bet for now: Check data[1] (prev) and data[0] (Kortex style)
-        const nb = data[0] || data[1];
-        if (Array.isArray(nb)) {
-          // Check common indices for ID
-          const potentialId = nb.find((x) => typeof x === 'string' && x.length > 20); // IDs are long UUIDs
-          if (potentialId) return { id: potentialId, title: title || 'New Notebook' }; // We don't have title here unless we passed it
-        }
-
-        // Fallback: Use the Kortex regex method on the payloadStr just to be sure
-        const match = payloadStr.match(
-          /\b[0-9a-fA-F]{8}-(?:\d|[a-fA-F]){4}-(?:\d|[a-fA-F]){4}-(?:\d|[a-fA-F]){4}-(?:\d|[a-fA-F]){12}\b/
-        );
-        if (match) return { id: match[0], title: 'New Notebook' };
-
-        if (Array.isArray(nb) && typeof nb[0] === 'string') {
-          return { id: nb[0], title: nb[1] };
-        }
-
-        throw new Error('Could not locate created notebook ID');
-      } catch (e) {
-        throw { code: 'parse', message: 'Create payload parsing failed', detail: e.message };
+      const id = extractFirstUuid(responseText);
+      if (!id) {
+        throw { code: 'parse', message: 'Create response did not include notebook ID' };
       }
+      return { id, title: title || 'New Notebook' };
     },
 
-    parseAddSource: function (responseText) {
-      const json = safeJSONParse(responseText);
-      const responseItem = json.find(
-        (item) => Array.isArray(item) && item[0] === scope.NLM_RPC.ADD_SOURCE
-      );
+    parseAddSource: function (responseText, context) {
+      const items = parseEnvelopeItems(responseText);
+      const payloads = extractPayloads(items);
 
-      if (!responseItem) throw { code: 'parse', message: 'Add Source RPC ID missing' };
-
-      // Just check if we have a payload at all
-      if (!responseItem[1] && !responseItem[2])
-        throw { code: 'parse', message: 'Add Source payload missing' };
+      for (const payload of payloads) {
+        const errorNode = detectErrorPayload(payload.payload);
+        if (errorNode) {
+          throw {
+            code: 'parse',
+            message: 'Add Source returned error response',
+            detail: {
+              tabUrl: context && context.tabUrl ? context.tabUrl : 'unknown',
+              errorNode,
+              responsePreview: responseText.slice(0, 400),
+            },
+          };
+        }
+      }
 
       return { success: true };
     },
