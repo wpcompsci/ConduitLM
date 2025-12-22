@@ -1,0 +1,19 @@
+# Dependencies and build output
+node_modules
+dist
+web-ext-artifacts
+
+# Repo knowledge and reference materials (do not format)
+Knowledge Bank
+src/integrations/notebooklm/AGENTS.md
+**/*.pdf
+**/*.png
+**/*.jpg
+**/*.jpeg
+**/*.webp
+
+# Minified / vendor artifacts
+**/*.min.js
+
+# Remove use of Prettier for manifest.json
+src/manifest.json

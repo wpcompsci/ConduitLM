@@ -1,48 +1,48 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-    <meta charset="utf-8">
-    <link rel="stylesheet" href="popup.css">
-</head>
-<body>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
     <div id="app">
-        <header>
-            <h1>ConduitLM</h1>
-        </header>
+      <header>
+        <h1>ConduitLM</h1>
+      </header>
 
-        <!-- Access Gate -->
-        <div id="gate-view" class="view hidden">
-            <p>Access to NotebookLM is required to send selections.</p>
-            <button id="btn-enable-access" class="primary">Enable Access</button>
+      <!-- Access Gate -->
+      <div id="gate-view" class="view hidden">
+        <p>Access to NotebookLM is required to send selections.</p>
+        <button id="btn-enable-access" class="primary">Enable Access</button>
+      </div>
+
+      <!-- Main Form -->
+      <div id="form-view" class="view hidden">
+        <div class="field-group">
+          <label for="notebook-select">Destination</label>
+          <select id="notebook-select">
+            <option value="" disabled selected>Loading notebooks...</option>
+          </select>
         </div>
 
-        <!-- Main Form -->
-        <div id="form-view" class="view hidden">
-            <div class="field-group">
-                <label for="notebook-select">Destination</label>
-                <select id="notebook-select">
-                    <option value="" disabled selected>Loading notebooks...</option>
-                </select>
-            </div>
-
-            <div id="create-container" class="field-group hidden">
-                <label for="new-notebook-title">New Notebook Name</label>
-                <input type="text" id="new-notebook-title" placeholder="My Research">
-            </div>
-
-            <div class="actions">
-                <button id="btn-confirm-send" class="primary" disabled>Confirm Send</button>
-            </div>
+        <div id="create-container" class="field-group hidden">
+          <label for="new-notebook-title">New Notebook Name</label>
+          <input type="text" id="new-notebook-title" placeholder="My Research" />
         </div>
 
-        <!-- Status/Feedback -->
-        <div id="status-view" class="view hidden">
-            <div id="status-icon"></div>
-            <div id="status-message"></div>
-            <div id="status-detail"></div>
-            <button id="btn-reset" class="secondary hidden">Back</button>
+        <div class="actions">
+          <button id="btn-confirm-send" class="primary" disabled>Confirm Send</button>
         </div>
+      </div>
+
+      <!-- Status/Feedback -->
+      <div id="status-view" class="view hidden">
+        <div id="status-icon"></div>
+        <div id="status-message"></div>
+        <div id="status-detail"></div>
+        <button id="btn-reset" class="secondary hidden">Back</button>
+      </div>
     </div>
     <script src="popup.js"></script>
-</body>
+  </body>
 </html>

@@ -1,89 +1,97 @@
 body {
-    width: 320px;
-    font-family: system-ui, -apple-system, sans-serif;
-    margin: 0;
-    padding: 16px;
-    color: #202124;
-    background: #fff;
+  width: 320px;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
+  margin: 0;
+  padding: 16px;
+  color: #202124;
+  background: #fff;
 }
 
 header h1 {
-    font-size: 16px;
-    margin: 0 0 16px 0;
-    color: #5f6368;
+  font-size: 16px;
+  margin: 0 0 16px 0;
+  color: #5f6368;
 }
 
 .view {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .hidden {
-    display: none !important;
+  display: none !important;
 }
 
 button {
-    cursor: pointer;
-    padding: 8px 16px;
-    border-radius: 4px;
-    border: none;
-    font-size: 14px;
-    font-weight: 500;
+  cursor: pointer;
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: none;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 button.primary {
-    background: #1a73e8;
-    color: white;
+  background: #1a73e8;
+  color: white;
 }
 
 button.primary:disabled {
-    background: #dadce0;
-    color: #fff;
-    cursor: default;
+  background: #dadce0;
+  color: #fff;
+  cursor: default;
 }
 
 button.secondary {
-    background: transparent;
-    color: #1a73e8;
-    border: 1px solid #dadce0;
+  background: transparent;
+  color: #1a73e8;
+  border: 1px solid #dadce0;
 }
 
-select, input {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #dadce0;
-    border-radius: 4px;
-    box-sizing: border-box;
-    font-size: 14px;
+select,
+input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #dadce0;
+  border-radius: 4px;
+  box-sizing: border-box;
+  font-size: 14px;
 }
 
 .field-group {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 label {
-    font-size: 12px;
-    color: #5f6368;
-    font-weight: 500;
+  font-size: 12px;
+  color: #5f6368;
+  font-weight: 500;
 }
 
 #status-view {
-    text-align: center;
-    padding: 20px 0;
+  text-align: center;
+  padding: 20px 0;
 }
 
 #status-message {
-    font-weight: 600;
-    margin-bottom: 4px;
+  font-weight: 600;
+  margin-bottom: 4px;
 }
 
 #status-detail {
-    font-size: 12px;
-    color: #d93025;
+  font-size: 12px;
+  color: #d93025;
 }
 
-.success { color: #1e8e3e; }
-.error { color: #d93025; }
+.success {
+  color: #1e8e3e;
+}
+.error {
+  color: #d93025;
+}

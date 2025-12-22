@@ -1,0 +1,21 @@
+{
+  "name": "conduitlm",
+  "version": "0.0.0",
+  "private": true,
+  "description": "ConduitLM Firefox MV3 WebExtension",
+  "scripts": {
+    "format:check": "prettier --check \"src/**/*.{js,css,html,md,json}\" \"AGENTS.md\" \"README.md\" \".prettierrc.json\" --ignore-path .prettierignore",
+    "format:write": "prettier --write \"src/**/*.{js,css,html,md,json}\" \"AGENTS.md\" \"README.md\" \".prettierrc.json\" --ignore-path .prettierignore",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
+    "webext:lint": "web-ext lint --source-dir src --ignore-files \"lib/**\"",
+    "webext:lint:soft": "web-ext lint --source-dir src --ignore-files \"lib/**\"",
+    "test": "npm run -s webext:lint",
+    "verify": "npm run -s format:check && npm run -s lint && npm run -s test"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "prettier": "^3.2.5",
+    "web-ext": "^8.4.0"
+  }
+}

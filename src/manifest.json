@@ -1,52 +1,36 @@
 {
   "manifest_version": 3,
   "name": "ConduitLM",
-  "version": "1.0.0",
-  "description": "Firefox MV3 Adapter for NotebookLM Ingestion",
+  "version": "0.0.0",
+  "description": "ConduitLM Firefox MV3 WebExtension",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "conduitlm@local",
+      "strict_min_version": "128.0",
+      "data_collection_permissions": {
+        "required": [
+          "none"
+        ]
+      }
+    }
+  },
   "permissions": [
     "storage",
     "tabs",
     "activeTab",
-    "scripting",
-    "downloads",
-    "cookies",
-    "contextMenus"
+    "scripting"
   ],
-  "host_permissions": [
-    "*://notebooklm.google.com/*",
-    "*://chatgpt.com/*",
-    "*://gemini.google.com/*",
-    "*://docs.google.com/*"
-  ],
-  "background": {
-    "scripts": [
-      "lib/jszip.min.js",
-      "lib/jspdf.umd.min.js",
-      "utils/formatters.js",
-      "utils/pdf-generator.js",
-      "integrations/notebooklm/rpc.js",
-      "integrations/notebooklm/tokens.js",
-      "integrations/notebooklm/parse.js",
-      "integrations/notebooklm/client.js",
-      "ingestion/pipeline.js",
-      "background/router.js"
-    ]
-  },
-  "content_scripts": [
-    {
-      "matches": [
-        "*://chatgpt.com/*",
-        "*://gemini.google.com/*",
-        "*://docs.google.com/*"
-      ],
-      "js": [
-        "ingestion/content_scraper.js"
-      ],
-      "run_at": "document_idle"
-    }
+  "optional_host_permissions": [
+    "https://notebooklm.google.com/*"
   ],
   "action": {
-    "default_popup": "ui/popup/popup.html",
-    "default_title": "ConduitLM"
+    "default_title": "ConduitLM",
+    "default_popup": "ui/popup/popup.html"
+  },
+  "background": {
+    "scripts": [
+      "background/main.js"
+    ],
+    "type": "module"
   }
 }
