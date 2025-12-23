@@ -80,6 +80,26 @@
     return match ? match[0] : null;
   }
 
+  function findUuidInValue(value, depth) {
+    if (depth > 6) return null;
+    if (typeof value === 'string') {
+      return isUuid(value) ? value : null;
+    }
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        const found = findUuidInValue(item, depth + 1);
+        if (found) return found;
+      }
+    }
+    if (value && typeof value === 'object') {
+      for (const item of Object.values(value)) {
+        const found = findUuidInValue(item, depth + 1);
+        if (found) return found;
+      }
+    }
+    return null;
+  }
+
   function detectErrorPayload(payload) {
     if (!Array.isArray(payload)) return null;
     if (payload.length === 0) return null;
@@ -142,10 +162,51 @@
     },
 
     parseCreateNotebook: function (responseText, title) {
-      const id = extractFirstUuid(responseText);
-      if (!id) {
-        throw { code: 'parse', message: 'Create response did not include notebook ID' };
+      const items = parseEnvelopeItems(responseText);
+      const payloads = extractPayloads(items);
+
+      for (const payload of payloads) {
+        const errorNode = detectErrorPayload(payload.payload);
+        if (errorNode) {
+          throw {
+            code: 'parse',
+            message: 'Create notebook returned error response',
+            detail: {
+              errorNode,
+              responsePreview: responseText.slice(0, 400),
+            },
+          };
+        }
       }
+
+      let id = extractFirstUuid(responseText);
+      if (!id) {
+        for (const payload of payloads) {
+          id = findUuidInValue(payload.payload, 0);
+          if (id) break;
+          if (payload.raw) {
+            const rawMatch = extractFirstUuid(payload.raw);
+            if (rawMatch) {
+              id = rawMatch;
+              break;
+            }
+          }
+        }
+      }
+
+      if (!id) {
+        throw {
+          code: 'parse',
+          message: 'Create response did not include notebook ID',
+          detail: {
+            envelopeCount: items.length,
+            payloadCount: payloads.length,
+            payloadSummary: summarizePayloads(payloads),
+            responsePreview: responseText.slice(0, 400),
+          },
+        };
+      }
+
       return { id, title: title || 'New Notebook' };
     },
 

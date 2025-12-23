@@ -1,7 +1,7 @@
 // src/ingestion/pipeline.js
 // Ingestion Pipeline
 (function (scope) {
-  async function resolveDestination(destination) {
+  async function resolveDestination(destination, jobId) {
     if (!destination || !destination.type) {
       throw { code: 'destination', message: 'No destination provided' };
     }
@@ -21,8 +21,19 @@
       if (!destination.title || !destination.title.trim()) {
         throw { code: 'destination', message: 'Notebook title is required' };
       }
-      const created = await scope.NLM_Client.createNotebook(destination.title.trim());
-      return { id: created.id, title: created.title, created: true };
+      const trimmedTitle = destination.title.trim();
+      try {
+        const created = await scope.NLM_Client.createNotebook(trimmedTitle);
+        return { id: created.id, title: created.title, created: true };
+      } catch (error) {
+        if (error && error.code === 'parse') {
+          const recovered = await recoverNotebookId(trimmedTitle, jobId);
+          if (recovered) {
+            return { id: recovered.id, title: recovered.title, created: true };
+          }
+        }
+        throw error;
+      }
     }
 
     throw { code: 'destination', message: `Unknown destination type: ${destination.type}` };
@@ -69,6 +80,23 @@
     }
 
     throw lastError || { code: 'source_ingest', message: 'Failed to add source' };
+  }
+
+  async function recoverNotebookId(title, jobId) {
+    const attempts = 3;
+
+    for (let attempt = 1; attempt <= attempts; attempt += 1) {
+      const notebooks = await scope.NLM_Client.listNotebooks();
+      const match = notebooks.find((nb) => nb.title === title);
+      if (match) {
+        return { id: match.id, title: match.title };
+      }
+      if (attempt < attempts) {
+        await waitForRetryDelay(jobId, attempt);
+      }
+    }
+
+    return null;
   }
 
   scope.Pipeline = {
@@ -152,7 +180,7 @@
           throw { code: 'extract', message: 'Unable to extract content for this page' };
         }
 
-        const resolvedDestination = await resolveDestination(request.destination);
+        const resolvedDestination = await resolveDestination(request.destination, job.id);
         const notebookId = resolvedDestination.id;
         const notebookTitle = resolvedDestination.title;
 
