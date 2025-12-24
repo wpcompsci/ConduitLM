@@ -57,10 +57,39 @@
     };
   }
 
+  function normalizeYouTube(raw) {
+    const title = raw.title || 'YouTube Video';
+    const channel = raw.channel || 'YouTube';
+    const url = raw.url || '';
+    const transcript = raw.transcript || '';
+    const header = [
+      `Title: ${title}`,
+      `Channel: ${channel}`,
+      url ? `URL: ${url}` : '',
+    ]
+      .filter(Boolean)
+      .join('\n');
+    const content = header ? `${header}\n\nTranscript:\n${transcript}` : transcript;
+    return {
+      title,
+      url,
+      sourceType: 'youtube',
+      content,
+      metadata: {
+        channel,
+        videoId: raw.videoId || '',
+        language: raw.language || '',
+        trackName: raw.trackName || '',
+        trackKind: raw.trackKind || '',
+      },
+    };
+  }
+
   scope.ConduitNormalize = {
     normalizeSelection,
     normalizeWebPage,
     normalizeConversation,
     normalizeGDoc,
+    normalizeYouTube,
   };
 })(globalThis);

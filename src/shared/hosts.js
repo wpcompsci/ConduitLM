@@ -5,6 +5,7 @@
   const CHATGPT_ALT_ORIGIN = 'https://chatgpt.com/*';
   const GEMINI_ORIGIN = 'https://gemini.google.com/*';
   const GDOCS_ORIGIN = 'https://docs.google.com/document/*';
+  const YOUTUBE_ORIGIN = 'https://www.youtube.com/*';
 
   function getOptionalOrigin(url) {
     if (!url) return null;
@@ -17,6 +18,7 @@
       if (host === 'docs.google.com' && parsed.pathname.startsWith('/document/')) {
         return GDOCS_ORIGIN;
       }
+      if (host === 'www.youtube.com') return YOUTUBE_ORIGIN;
       return null;
     } catch (e) {
       return null;
@@ -33,7 +35,8 @@
       origin === CHATGPT_ORIGIN ||
       origin === CHATGPT_ALT_ORIGIN ||
       origin === GEMINI_ORIGIN ||
-      origin === GDOCS_ORIGIN
+      origin === GDOCS_ORIGIN ||
+      origin === YOUTUBE_ORIGIN
     );
   }
 
@@ -43,6 +46,7 @@
     CHATGPT_ALT_ORIGIN,
     GEMINI_ORIGIN,
     GDOCS_ORIGIN,
+    YOUTUBE_ORIGIN,
     getOptionalOrigin,
     isSupportedHost,
     isSourceExtractHost,

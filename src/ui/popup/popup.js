@@ -504,6 +504,7 @@ function formatSourceType(sourceType) {
   if (!sourceType) return 'content';
   const value = String(sourceType).toLowerCase();
   if (value === 'gdoc') return 'Google Doc';
+  if (value === 'youtube') return 'YouTube video';
   if (value === 'selection') return 'selected text';
   if (value === 'web') return 'web page';
   if (value.includes('chatgpt')) return 'ChatGPT conversation';

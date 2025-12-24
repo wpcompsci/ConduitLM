@@ -1,10 +1,126 @@
 // In-Page Floating Trigger UI
 (function (scope) {
   const ROOT_ID = 'conduitlm-inpage-root';
+  const YOUTUBE_BUTTON_HOST_ID = 'conduitlm-youtube-button-host';
   const TOAST_DURATION_MS = 3500;
   const CREATE_OPTION_VALUE = '__create__';
 
-  function init() {
+  let panelApi = null;
+  let youtubeObserver = null;
+
+  function requestPanelToggle() {
+    if (panelApi && typeof panelApi.toggle === 'function') {
+      panelApi.toggle();
+      return;
+    }
+    const root = document.getElementById(ROOT_ID);
+    if (!root || !root.shadowRoot) return;
+    const fab = root.shadowRoot.querySelector('.conduitlm-fab');
+    if (fab) {
+      fab.click();
+    }
+  }
+
+  function isYouTubeWatchPage() {
+    if (location.hostname !== 'www.youtube.com') return false;
+    return (
+      location.pathname.startsWith('/watch') ||
+      location.pathname.startsWith('/shorts/') ||
+      location.pathname.startsWith('/live/')
+    );
+  }
+
+  function findYouTubeActionBar() {
+    const selectors = [
+      'ytd-watch-metadata #top-level-buttons-computed',
+      '#top-level-buttons-computed',
+      'ytd-watch-metadata #top-level-buttons',
+      '#top-level-buttons',
+    ];
+    for (const selector of selectors) {
+      const el = document.querySelector(selector);
+      if (el) return el;
+    }
+    return null;
+  }
+
+  function buildYouTubeButton() {
+    const host = document.createElement('span');
+    host.id = YOUTUBE_BUTTON_HOST_ID;
+    const shadow = host.attachShadow({ mode: 'open' });
+
+    const style = document.createElement('style');
+    style.textContent = `
+      :host {
+        display: inline-flex;
+        align-items: center;
+        margin-left: 8px;
+      }
+      .conduitlm-yt-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 36px;
+        padding: 0 14px;
+        border-radius: 18px;
+        border: 1px solid #d9d9d9;
+        background: #111111;
+        color: #ffffff;
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+        cursor: pointer;
+      }
+      .conduitlm-yt-btn:hover {
+        background: #1b1b1b;
+      }
+      .conduitlm-yt-btn:active {
+        background: #000000;
+      }
+    `;
+
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'conduitlm-yt-btn';
+    button.textContent = 'ConduitLM';
+    button.setAttribute('aria-label', 'ConduitLM quick send');
+    button.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      requestPanelToggle();
+    });
+
+    shadow.append(style, button);
+    return host;
+  }
+
+  function installYouTubeButton() {
+    if (!isYouTubeWatchPage()) return false;
+    if (document.getElementById(YOUTUBE_BUTTON_HOST_ID)) return true;
+    const container = findYouTubeActionBar();
+    if (!container) return false;
+    const host = buildYouTubeButton();
+    container.prepend(host);
+    return true;
+  }
+
+  function ensureYouTubeButton() {
+    if (!isYouTubeWatchPage()) return;
+    installYouTubeButton();
+    if (youtubeObserver) return;
+    youtubeObserver = new MutationObserver(() => {
+      if (!isYouTubeWatchPage()) return;
+      installYouTubeButton();
+    });
+    youtubeObserver.observe(document.body, { childList: true, subtree: true });
+  }
+
+  function init(options) {
+    const opts = options || {};
+    if (opts.youtubeButton) {
+      ensureYouTubeButton();
+    }
+
     if (document.getElementById(ROOT_ID)) return;
 
     const sourceOnly =
@@ -288,6 +404,8 @@
       }
     }
 
+    panelApi = { open: openPanel, close: closePanel, toggle: togglePanel };
+
     function updateIntentButtons() {
       const selected = state.selectedIntent;
       selectionBtn.classList.toggle(
@@ -475,9 +593,17 @@
       }
     });
 
+    document.addEventListener('selectionchange', () => {
+      updateSelectionAvailability();
+    });
+
     window.addEventListener('blur', () => {
       closePanel();
     });
+
+    if (opts.youtubeButton) {
+      ensureYouTubeButton();
+    }
   }
 
   scope.ConduitInPage = { init };

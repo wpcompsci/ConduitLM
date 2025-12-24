@@ -186,6 +186,32 @@
               throw { code: 'extract', message: 'Google Doc ID not found' };
             }
             normalized = scope.ConduitNormalize.normalizeGDoc(raw);
+          } else if (source.id === 'youtube') {
+            if (raw.isLive) {
+              throw { code: 'extract', message: 'Live YouTube videos are not supported' };
+            }
+            if (!raw.videoId) {
+              throw { code: 'extract', message: 'YouTube video ID not found' };
+            }
+            if (!raw.transcript || !raw.transcript.trim()) {
+              const captionTrackCount =
+                typeof raw.captionTrackCount === 'number' ? raw.captionTrackCount : 0;
+              const transcriptStatus = raw.transcriptStatus || '';
+              const message =
+                captionTrackCount === 0
+                  ? 'YouTube captions are not available for this video'
+                  : 'YouTube transcript could not be retrieved';
+              throw {
+                code: 'extract',
+                message,
+                detail: {
+                  videoId: raw.videoId || '',
+                  captionTrackCount,
+                  transcriptStatus,
+                },
+              };
+            }
+            normalized = scope.ConduitNormalize.normalizeYouTube(raw);
           } else if (hasConversation(raw)) {
             normalized = scope.ConduitNormalize.normalizeConversation(raw, source.label);
           } else {

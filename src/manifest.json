@@ -26,7 +26,8 @@
     "https://chat.openai.com/*",
     "https://chatgpt.com/*",
     "https://gemini.google.com/*",
-    "https://docs.google.com/document/*"
+    "https://docs.google.com/document/*",
+    "https://www.youtube.com/*"
   ],
   "action": {
     "default_title": "ConduitLM",
@@ -47,6 +48,7 @@
       "sources/chatgpt.js",
       "sources/gemini.js",
       "sources/gdocs.js",
+      "sources/youtube.js",
       "sources/web.js",
       "integrations/notebooklm/rpc.js",
       "integrations/notebooklm/tokens.js",
@@ -96,6 +98,18 @@
         "shared/triggers.js",
         "content/inpage_ui.js",
         "content/loader_gdocs.js"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://www.youtube.com/*"
+      ],
+      "js": [
+        "shared/hosts.js",
+        "shared/triggers.js",
+        "content/inpage_ui.js",
+        "content/loader_youtube.js"
       ],
       "run_at": "document_idle"
     }
