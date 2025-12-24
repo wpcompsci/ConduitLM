@@ -16,6 +16,22 @@
     return tab;
   }
 
+  async function getTabById(tabId) {
+    try {
+      const tab = await browser.tabs.get(tabId);
+      if (!tab || !tab.url) {
+        throw { code: 'tab_missing', message: 'Tab not available' };
+      }
+      if (isRestrictedUrl(tab.url)) {
+        throw { code: 'permission', message: 'Cannot extract from restricted page' };
+      }
+      return tab;
+    } catch (error) {
+      if (error && error.code) throw error;
+      throw { code: 'tab_missing', message: 'Tab not available' };
+    }
+  }
+
   async function executeInTab(tabId, func, args) {
     try {
       const results = await browser.scripting.executeScript({
@@ -23,6 +39,11 @@
         func,
         args: args || [],
       });
+
+      const lastError = browser.runtime.lastError;
+      if (lastError) {
+        throw new Error(lastError.message || 'Failed to execute script');
+      }
 
       if (!results || results.length === 0) {
         throw new Error('Injection returned no results');
@@ -49,6 +70,7 @@
 
   scope.Extractor = {
     getActiveTab,
+    getTabById,
     extractSelection: async function (tab) {
       return await executeInTab(tab.id, selectionExtractor, []);
     },

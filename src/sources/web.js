@@ -9,20 +9,20 @@
     }
   }
 
-  function isNonTrivial(text) {
-    return text && text.trim().length > 200;
-  }
-
-  function cleanText(text) {
-    return text.replace(/\s+\n/g, '\n').trim();
-  }
-
-  function isIgnoredElement(el) {
-    if (!el || !el.closest) return false;
-    return Boolean(el.closest('nav, footer, aside, header'));
-  }
-
   function extract() {
+    function isNonTrivial(text) {
+      return text && text.trim().length > 200;
+    }
+
+    function cleanText(text) {
+      return text.replace(/\s+\n/g, '\n').trim();
+    }
+
+    function isIgnoredElement(el) {
+      if (!el || !el.closest) return false;
+      return Boolean(el.closest('nav, footer, aside, header'));
+    }
+
     const title = document.title || 'Web Page';
     const url = location.href;
 

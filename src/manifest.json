@@ -18,10 +18,15 @@
     "storage",
     "tabs",
     "activeTab",
-    "scripting"
+    "scripting",
+    "menus"
   ],
   "optional_host_permissions": [
-    "https://notebooklm.google.com/*"
+    "https://notebooklm.google.com/*",
+    "https://chat.openai.com/*",
+    "https://chatgpt.com/*",
+    "https://gemini.google.com/*",
+    "https://docs.google.com/document/*"
   ],
   "action": {
     "default_title": "ConduitLM",
@@ -34,7 +39,10 @@
       "utils/formatters.js",
       "utils/pdf-generator.js",
       "shared/errors.js",
+      "shared/hosts.js",
       "shared/normalize.js",
+      "shared/triggers.js",
+      "shared/trigger_store.js",
       "sources/registry.js",
       "sources/chatgpt.js",
       "sources/gemini.js",
@@ -48,7 +56,48 @@
       "ingestion/jobs.js",
       "ingestion/extractor.js",
       "ingestion/pipeline.js",
+      "background/trigger_flow.js",
+      "ui/contextMenus.js",
       "background/router.js"
     ]
-  }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://chat.openai.com/*",
+        "https://chatgpt.com/*"
+      ],
+      "js": [
+        "shared/hosts.js",
+        "shared/triggers.js",
+        "content/inpage_ui.js",
+        "content/loader_chatgpt.js"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://gemini.google.com/*"
+      ],
+      "js": [
+        "shared/hosts.js",
+        "shared/triggers.js",
+        "content/inpage_ui.js",
+        "content/loader_gemini.js"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://docs.google.com/document/*"
+      ],
+      "js": [
+        "shared/hosts.js",
+        "shared/triggers.js",
+        "content/inpage_ui.js",
+        "content/loader_gdocs.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
 }

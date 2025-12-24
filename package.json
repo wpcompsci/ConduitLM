@@ -8,8 +8,8 @@
     "format:write": "prettier --write \"src/**/*.{js,css,html,md,json}\" \"AGENTS.md\" \"README.md\" \".prettierrc.json\" --ignore-path .prettierignore",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
-    "webext:lint": "web-ext lint --source-dir src --ignore-files \"lib/**\"",
-    "webext:lint:soft": "web-ext lint --source-dir src --ignore-files \"lib/**\"",
+    "webext:lint": "web-ext lint --source-dir src",
+    "webext:lint:soft": "web-ext lint --source-dir src",
     "test": "npm run -s webext:lint",
     "verify": "npm run -s format:check && npm run -s lint && npm run -s test"
   },

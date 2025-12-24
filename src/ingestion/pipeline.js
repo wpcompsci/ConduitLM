@@ -47,6 +47,31 @@
     return raw && Array.isArray(raw.messages) && raw.messages.length > 0;
   }
 
+  async function ensureOptionalHostAccess(url) {
+    if (!scope.ConduitHosts || typeof scope.ConduitHosts.getOptionalOrigin !== 'function') {
+      return;
+    }
+    const origin = scope.ConduitHosts.getOptionalOrigin(url);
+    if (!origin) return;
+    const hasPermission = await browser.permissions.contains({ origins: [origin] });
+    if (!hasPermission) {
+      throw {
+        code: 'permission',
+        message: 'Access to this site is not enabled. Use the popup to grant access.',
+        detail: { origin },
+      };
+    }
+  }
+
+  function sameOrigin(urlA, urlB) {
+    if (!urlA || !urlB) return true;
+    try {
+      return new URL(urlA).origin === new URL(urlB).origin;
+    } catch (e) {
+      return true;
+    }
+  }
+
   async function waitForRetryDelay(jobId, attempt) {
     const delayMs = 400 * attempt;
     const alarmName = `conduit_retry_${jobId}_${attempt}`;
@@ -117,63 +142,63 @@
       const job = await scope.JobStore.createJob({ request });
 
       try {
-        const tab = await scope.Extractor.getActiveTab();
+        const tab = request.tabId
+          ? await scope.Extractor.getTabById(request.tabId)
+          : await scope.Extractor.getActiveTab();
         await scope.JobStore.updateJob(job.id, {
           status: 'in_progress',
           tabId: tab.id,
           tabUrl: tab.url,
         });
 
-        const intent = request.intent || 'auto';
+        const intent = request.intent;
         let raw = null;
         let normalized = null;
         const url = tab.url;
 
-        if (intent === 'selection' || intent === 'auto') {
+        if (!intent) {
+          throw { code: 'intent', message: 'Send intent is required' };
+        }
+
+        await ensureOptionalHostAccess(url);
+        if (!sameOrigin(request.url, url)) {
+          throw { code: 'tab_changed', message: 'Tab changed since trigger. Please retry.' };
+        }
+
+        if (intent === 'selection') {
           raw = await scope.Extractor.extractSelection(tab);
           if (hasSelection(raw)) {
             normalized = scope.ConduitNormalize.normalizeSelection(raw);
-          } else if (intent === 'selection') {
+          } else {
             throw { code: 'selection_empty', message: 'No text selected to send' };
           }
-        }
-
-        if (!normalized && (intent === 'chat' || intent === 'auto')) {
-          const matches = scope.Extractor.detectSources(url).filter(
-            (source) => source.id === 'chatgpt' || source.id === 'gemini'
-          );
+        } else if (intent === 'sourceExtract') {
+          const matches = scope.Extractor
+            .detectSources(url)
+            .filter((source) => source.id !== 'web');
           const source = matches[0];
-          if (source) {
-            raw = await scope.Extractor.extractSourceById(tab, source.id);
-            if (!hasConversation(raw)) {
-              throw { code: 'extract', message: 'Conversation content not found' };
-            }
-            normalized = scope.ConduitNormalize.normalizeConversation(raw, source.label);
-          } else if (intent === 'chat') {
-            throw { code: 'unsupported', message: 'This page is not a supported chat source' };
+          if (!source) {
+            throw { code: 'unsupported', message: 'This page is not a supported source' };
           }
-        }
-
-        if (!normalized && (intent === 'gdoc' || intent === 'auto')) {
-          const matches = scope.Extractor.detectSources(url).filter((source) => source.id === 'gdoc');
-          const source = matches[0];
-          if (source) {
-            raw = await scope.Extractor.extractSourceById(tab, source.id);
+          raw = await scope.Extractor.extractSourceById(tab, source.id);
+          if (source.id === 'gdoc') {
             if (!raw.docId) {
               throw { code: 'extract', message: 'Google Doc ID not found' };
             }
             normalized = scope.ConduitNormalize.normalizeGDoc(raw);
-          } else if (intent === 'gdoc') {
-            throw { code: 'unsupported', message: 'This page is not a Google Doc' };
+          } else if (hasConversation(raw)) {
+            normalized = scope.ConduitNormalize.normalizeConversation(raw, source.label);
+          } else {
+            throw { code: 'extract', message: 'Source content not found' };
           }
-        }
-
-        if (!normalized && (intent === 'page' || intent === 'auto')) {
+        } else if (intent === 'pageMain') {
           raw = await scope.Extractor.extractSourceById(tab, 'web');
           if (!raw.content || !raw.content.trim()) {
             throw { code: 'extract', message: 'No readable page content found' };
           }
           normalized = scope.ConduitNormalize.normalizeWebPage(raw);
+        } else {
+          throw { code: 'intent', message: `Unknown intent: ${intent}` };
         }
 
         if (!normalized) {
@@ -212,6 +237,7 @@
 
         const result = {
           status: 'ingested',
+          requestId: request.requestId || null,
           notebookId: notebookId,
           notebookTitle: notebookTitle,
           sourceTitle: normalized.title,

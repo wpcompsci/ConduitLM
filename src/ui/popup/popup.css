@@ -1,82 +1,144 @@
 body {
   width: 320px;
-  font-family:
-    system-ui,
-    -apple-system,
-    sans-serif;
+  font-family: "Segoe UI", "Trebuchet MS", "Verdana", sans-serif;
   margin: 0;
-  padding: 16px;
+  padding: 12px;
   color: #202124;
-  background: #fff;
+  background: #f5f6f7;
 }
 
-header h1 {
-  font-size: 16px;
-  margin: 0 0 16px 0;
-  color: #5f6368;
+#app {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .view {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .hidden {
   display: none !important;
 }
 
-button {
+.conduitlm-panel {
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.14);
+}
+
+.conduitlm-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #5f6368;
+  font-weight: 600;
+}
+
+.conduitlm-text {
+  font-size: 13px;
+  color: #202124;
+  line-height: 1.4;
+}
+
+.conduitlm-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #5f6368;
+  font-weight: 600;
+}
+
+.conduitlm-intents {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+}
+
+.conduitlm-option {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #dadce0;
+  background: #f8f9fa;
+  color: #202124;
+  font-size: 13px;
+  text-align: left;
   cursor: pointer;
-  padding: 8px 16px;
-  border-radius: 4px;
-  border: none;
-  font-size: 14px;
-  font-weight: 500;
 }
 
-button.primary {
+.conduitlm-option.active {
   background: #1a73e8;
-  color: white;
+  border-color: #1a73e8;
+  color: #ffffff;
 }
 
-button.primary:disabled {
-  background: #dadce0;
-  color: #fff;
+.conduitlm-option:disabled {
+  opacity: 0.5;
   cursor: default;
 }
 
-button.secondary {
-  background: transparent;
-  color: #1a73e8;
-  border: 1px solid #dadce0;
-}
-
-select,
-input {
-  width: 100%;
-  padding: 8px;
-  border: 1px solid #dadce0;
-  border-radius: 4px;
-  box-sizing: border-box;
-  font-size: 14px;
-}
-
-.field-group {
+.conduitlm-field {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-label {
+.conduitlm-select,
+.conduitlm-input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #dadce0;
+  border-radius: 6px;
+  font-size: 12px;
+  box-sizing: border-box;
+}
+
+.conduitlm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.conduitlm-confirm {
+  background: #1a73e8;
+  border: none;
+  color: #ffffff;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.conduitlm-confirm:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.conduitlm-secondary {
+  background: transparent;
+  color: #1a73e8;
+  border: 1px solid #dadce0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.site-domain {
   font-size: 12px;
   color: #5f6368;
-  font-weight: 500;
+  border: 1px dashed #dadce0;
+  border-radius: 6px;
+  padding: 6px 8px;
 }
 
 #status-view {
   text-align: center;
-  padding: 20px 0;
 }
 
 #status-message {
@@ -95,7 +157,7 @@ label {
   color: #3c4043;
   background: #f8f9fa;
   border: 1px solid #dadce0;
-  border-radius: 4px;
+  border-radius: 6px;
   padding: 6px 8px;
 }
 
