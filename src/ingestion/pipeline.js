@@ -208,6 +208,8 @@
                   videoId: raw.videoId || '',
                   captionTrackCount,
                   transcriptStatus,
+                  trackSource: raw.trackSource || '',
+                  transcriptError: raw.transcriptError || '',
                 },
               };
             }
